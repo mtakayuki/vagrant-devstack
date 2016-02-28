@@ -1,0 +1,33 @@
+---
+- hosts: all
+  vars:
+    devstack_dir: ~/devstack
+  tasks:
+    - apt: update_cache=yes
+      become: yes
+
+    - apt: upgrade=full
+      become: yes
+
+    - apt: "name={{ item }} state=present"
+      become: yes
+      items:
+        - git
+        - vim
+
+    - git:
+        repo: https://github.com/openstack-dev/devstack.git
+        dest: "{{ devstack_dir }}"
+        version: stable/liberty
+
+    - copy:
+        src: "{{ devstack_dir }}/samples/local.conf"
+        dest: "{{ devstack_dir }}/local.conf"
+        remote_src: yes
+
+    - replace:
+        dest: "{{ devstack_dir }}/local.conf"
+        regexp: "^#HOST_IP=.*$"
+        replace: "HOST_IP=192.168.33.20"
+
+    - command: ./stack.sh chdir="{{ devstack_dir }}"
